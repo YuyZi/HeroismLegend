@@ -12,11 +12,11 @@ public class PlayerController : MonoBehaviour
     public VoidEvent_SO loadDataEvent;
     public VoidEvent_SO backToMenuEvent;
     //获取脚本组件后可以获取所有的公开属性对象
-    public Character character;
-    public PhysicsCheck physicsCheck;
-    public PlayerAnimation playerAnimation;
+    [HideInInspector]public Character character;
+    [HideInInspector]public PhysicsCheck physicsCheck;
+    [HideInInspector]public PlayerAnimation playerAnimation;
     public PlayerInputControl inputControl;
-    public Vector2 inputDriection;
+    [HideInInspector]public Vector2 inputDriection;
     private Rigidbody2D rb;
     private CapsuleCollider2D coll;
     private BoxCollider2D boxcoll;
@@ -118,6 +118,7 @@ public class PlayerController : MonoBehaviour
         //读取游戏进度
     private void OnLoadDataEvent()
     {
+        //取消死亡状态
         isDead =false;
     }
     //加载结束

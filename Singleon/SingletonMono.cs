@@ -2,37 +2,45 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-//泛型  约束
+/// <summary>
+/// 饿汉式单例模式通用父类
+/// </summary>
+/// <typeparam name="T"></typeparam>
+//添加泛型约束为T必须为其本身或子类
 public class SingletonMono<T> : MonoBehaviour where T : SingletonMono<T>
 {
-    //声明一个类型为T的静态变量，T可以被任何类型代替例如GameManager
-     private static T minstance;
-     //声明一个类型的属性来包装Instancce,使得可以让外部访问到他
-    public static T Instance 
-    {
-        get { return minstance;}
-    }
-
-    protected virtual void Awake()//声明一个只能被 继承类访问的虚方法
-    {
-        if (minstance != null)
-        {
-            Destroy(gameObject);
+        private static T mInstance;
+        public static T Instance 
+        { 
+            get
+            {
+                if (mInstance == null)
+                { 
+                    //不能New来创建继承于MonoBehaviour的对象
+                    // mInstance = System.Activator.CreateInstance(typeof(T), true) as T;
+                    //生成新对象
+                    GameObject obj = new GameObject();
+                    //命名
+                    obj.name = typeof(T).ToString();
+                    //创造空对象 给予类型
+                    mInstance = obj.AddComponent<T>();
+                }
+                return mInstance;
+            }
         }
-        else
-        {
-            minstance = (T)this;
-        }
-        //DontDestroyOnLoad(gameObject);
-    }
 
-    //继承且可重写的虚函数
-    // protected virtual void Awake()
-    // {
-    //     OnInit();
-    // }
-    // public virtual void OnInit()
-    // {
-    //     //DontDestroyOnLoad(this);
-    // }
+        protected virtual void Awake()
+        {
+            OnInit();
+        }
+
+        /// <summary>
+        /// 可选初始化函数
+        /// </summary>
+        protected virtual void OnInit()
+        {
+
+        }
+
+
 }

@@ -45,7 +45,8 @@ public class ScenesLoader : MonoBehaviour,ISaveable
          backToMenuEvent.OnEventRaised += OnBackToMenuEvent;
         //FIXME:bug 无法注册        持久化场景放在Start中会覆盖原有数据无法传递数值 maybe编辑器BUG
         ISaveable saveable = this;
-        saveable.RegisterSaveData();
+        // saveable.RegisterSaveData();
+        RegisterSaveData();
    }
    private void OnDisable() 
    {
@@ -53,7 +54,8 @@ public class ScenesLoader : MonoBehaviour,ISaveable
         newGameEvent.OnEventRaised -= NewGame;
         backToMenuEvent.OnEventRaised -= OnBackToMenuEvent;
         ISaveable saveable = this;
-        saveable.UnRegisterSaveData();
+        // saveable.UnRegisterSaveData();
+        UnRegisterSaveData();
    }
     private void Start() 
     {
@@ -103,8 +105,6 @@ public class ScenesLoader : MonoBehaviour,ISaveable
    }
    private IEnumerator  UnLoadPreviouScene()
    {
-        //关闭人物
-        playerTrans.gameObject.SetActive(false);
         if(fadeScreen)
         {
             //黑幕淡入
@@ -116,6 +116,8 @@ public class ScenesLoader : MonoBehaviour,ISaveable
         unloadSceneEvent.RaiseLoadRequestEvent(sceneToLoad,positionToGo,true);
         //卸载场景 
         yield return currentLoadScene.sceneRefernce.UnLoadScene();
+        //关闭人物
+        playerTrans.gameObject.SetActive(false);
         //加载场景
         LoadNewScene();
    }
@@ -160,7 +162,14 @@ public class ScenesLoader : MonoBehaviour,ISaveable
             return null;
         }
     }
-
+    public void RegisterSaveData()
+    {
+        DataManager.Instance.RegisterSaveData(this);
+    }
+    public void UnRegisterSaveData()
+    {
+        DataManager.Instance.UnRegisterSaveData(this);
+    }
     public void GetSaveData(Data data)
     {
         //工厂模式  使用方法 不考虑细节 
@@ -174,7 +183,7 @@ public class ScenesLoader : MonoBehaviour,ISaveable
        if(data.characterPosDict.ContainsKey(playerID))
        {
             //避免反复加载位置出现问题
-            positionToGo = data.characterPosDict[playerID];
+            positionToGo = data.characterPosDict[playerID].ToVector3();
             //在工厂中完成反序列化  读取场景
             sceneToLoad = data.GetSaveScene();
             //加载场景

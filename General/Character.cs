@@ -28,13 +28,15 @@ public class Character : MonoBehaviour,ISaveable
         newGameEvent.OnEventRaised += NewGame;
         //初始化启用已经编写的实现方法  手动生成与注销
         ISaveable saveable = this;
-        saveable.RegisterSaveData();
+        // saveable.RegisterSaveData();
+        RegisterSaveData();
     }
     private void OnDisable() 
     {
         newGameEvent.OnEventRaised -= NewGame;
         ISaveable saveable = this;
-        saveable.UnRegisterSaveData();
+        // saveable.UnRegisterSaveData();
+        UnRegisterSaveData();
     }
     private void NewGame() 
     {
@@ -125,7 +127,7 @@ public class Character : MonoBehaviour,ISaveable
         OnHealthChange?.Invoke(this);
     }
 
-
+    //接口方法
     public DataDefinition GetDataID()
     {
         if(GetComponent<DataDefinition>())
@@ -136,22 +138,30 @@ public class Character : MonoBehaviour,ISaveable
             return null;
         }
     }
-
+    public void RegisterSaveData()
+    {
+        DataManager.Instance.RegisterSaveData(this);
+    }
+    public void UnRegisterSaveData()
+    {
+        DataManager.Instance.UnRegisterSaveData(this);
+    }
     public void GetSaveData(Data data)
     {
         if(data.characterPosDict.ContainsKey(GetDataID().ID))
         {
             //存储位置
-            data.characterPosDict[GetDataID().ID]   = transform.position;
+            data.characterPosDict[GetDataID().ID]   = new Data.SerializeVector3(transform.position);
             //存储数值      添加string进行标识
             data.floatSaveDict[GetDataID().ID + "health"] =  currentHealth;
             data.floatSaveDict[GetDataID().ID + "power"] =  currentPower;
         }
         else
         {
-            data.characterPosDict.Add(GetDataID().ID,transform.position);
+            data.characterPosDict.Add(GetDataID().ID,new Data.SerializeVector3(transform.position));
             data.floatSaveDict.Add(GetDataID().ID + "health" , this.currentHealth);
             data.floatSaveDict.Add(GetDataID().ID + "power" , this.currentPower);
+            print("svaeData:"+"name:"+this.gameObject.name+"health"+this.currentHealth);
         }
     }
 
@@ -159,10 +169,10 @@ public class Character : MonoBehaviour,ISaveable
     {
        if(data.characterPosDict.ContainsKey(GetDataID().ID))
         {
-            transform.position = data.characterPosDict[GetDataID().ID] ;
+            transform.position = data.characterPosDict[GetDataID().ID].ToVector3() ;
             this.currentHealth = data.floatSaveDict[GetDataID().ID + "health"];
             this.currentPower = data.floatSaveDict[GetDataID().ID + "power"];
-
+            print("loadData:"+"name:"+this.gameObject.name+"health"+this.currentHealth);
             //更新UI
             OnHealthChange?.Invoke(this);
         }

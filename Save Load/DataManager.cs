@@ -2,7 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
+//序列化反序列化
+using Newtonsoft.Json;
+//input output
+using System.IO;
 
+//优先执行      数值越小越优先
+[DefaultExecutionOrder(-100)]
 public class DataManager : SingletonMono<DataManager>
 {
     //监听传送点的广播
@@ -14,10 +20,28 @@ public class DataManager : SingletonMono<DataManager>
 
     private List<ISaveable> saveableList = new List<ISaveable>();
     private Data saveData;
-    protected override void Awake() 
+    //存储路径
+    private string jsonFolder;
+    private new void Awake() 
     {
-        base.Awake();
+        saveDataEvent = (VoidEvent_SO)Resources.Load("Data_SO/Events_SO/SaveGameDataEvent");
+        //print("saveDataEvent:"+saveDataEvent.name);
+        loadDataEvent = (VoidEvent_SO)Resources.Load("Data_SO/Events_SO/LoadGameDataEvent");
+        //print("loadDataEvent:"+loadDataEvent.name);
+        // if(instance ==null)
+        // {
+        //     instance = this;
+        // }
+        // else
+        // {
+        //     Destroy(this.gameObject);
+        // }
+        //base.Awake();
         saveData = new Data();
+        //Unity默认路径
+        jsonFolder =Application.persistentDataPath + "/SAVE DATA/";
+        //开始游戏读取数据
+        ReadSaveData();
     } 
     
     private void OnEnable() 
@@ -30,6 +54,7 @@ public class DataManager : SingletonMono<DataManager>
         saveDataEvent.OnEventRaised -= Save;
         loadDataEvent.OnEventRaised -= Load;
     }
+
     private void Update() 
     {
         if(Keyboard.current.lKey.wasPressedThisFrame)
@@ -54,8 +79,20 @@ public class DataManager : SingletonMono<DataManager>
         {
             saveable.GetSaveData(saveData);
         }
+
+        var resultPath = jsonFolder + "data.sav";
+        //数据转换(序列化)      转换为string类型的数据
+        var jsonData = JsonConvert.SerializeObject(saveData);
+        //写入文件      不存在则创建路径
+        if(!File.Exists(resultPath))
+        {
+            Directory.CreateDirectory(jsonFolder);
+        }
+        //路径 内容
+        File.WriteAllText(resultPath,jsonData);
+
         //打印输出检查
-        Debug.Log("save");
+        //Debug.Log("save");
         // foreach(var item in saveData.characterPosDict)
         // {
         //   Debug.Log(item.Key+"   "+ item.Value);
@@ -63,10 +100,30 @@ public class DataManager : SingletonMono<DataManager>
     }
     public void Load()
     {
-        foreach(var saveable in saveableList)
+        //遍历bug
+        // foreach(var saveable in saveableList)
+        // {
+        //     saveable.LoadData(saveData);
+        // }
+        for(int i=0 ; i < saveableList.Count ; i++)
         {
+            ISaveable saveable = saveableList[i];
             saveable.LoadData(saveData);
         }
-        Debug.Log("load");
+        //Debug.Log("load");
+    }
+    //读取数据
+    private void ReadSaveData()
+    {
+        var resultPath = jsonFolder + "data.sav";
+
+        if(File.Exists(resultPath))
+        {
+            var stringData =  File.ReadAllText(resultPath);
+            //                  反序列化为Data文件        类型   文件内容
+            var jsonData = JsonConvert.DeserializeObject<Data>(stringData);
+
+            saveData = jsonData;
+        }
     }
 }
